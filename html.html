@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS AI Studio — Free Unlimited Prompt Creator</title>
+    <meta name="description" content="Create video, image, writing, and app prompts for free with no API key, account, or generation limit. Prompts are built locally in your browser.">
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --bg-base: #030712;
+            --bg-surface: #0f172a;
+            --bg-card: rgba(30, 41, 59, 0.7);
+            --border-color: rgba(51, 65, 85, 0.6);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-primary: #6366f1;
+            --accent-secondary: #a855f7;
+            --accent-glow: rgba(99, 102, 241, 0.35);
+        }
+
+        [data-theme="cyberpunk"] {
+            --bg-base: #05050a;
+            --bg-surface: #0c0a1d;
+            --bg-card: rgba(20, 15, 38, 0.75);
+            --border-color: rgba(236, 72, 153, 0.4);
+            --text-main: #fff1f2;
+            --text-muted: #cbd5e1;
+            --accent-primary: #ec4899;
+            --accent-secondary: #8b5cf6;
+            --accent-glow: rgba(236, 72, 153, 0.4);
+        }
+
+        [data-theme="matrix"] {
+            --bg-base: #020604;
+            --bg-surface: #06110a;
+            --bg-card: rgba(10, 30, 18, 0.7);
+            --border-color: rgba(34, 197, 94, 0.4);
+            --text-main: #f0fdf4;
+            --text-muted: #86efac;
+            --accent-primary: #22c55e;
+            --accent-secondary: #10b981;
+            --accent-glow: rgba(34, 197, 94, 0.35);
+        }
+
+        [data-theme="sapphire"] {
+            --bg-base: #020817;
+            --bg-surface: #0b1329;
+            --bg-card: rgba(15, 23, 42, 0.75);
+            --border-color: rgba(56, 189, 248, 0.4);
+            --text-main: #f0f9ff;
+            --text-muted: #bae6fd;
+            --accent-primary: #0ea5e9;
+            --accent-secondary: #3b82f6;
+            --accent-glow: rgba(14, 165, 233, 0.4);
+        }
+
+        [data-theme="light"] {
+            --bg-base: #f8fafc;
+            --bg-surface: #ffffff;
+            --bg-card: rgba(255, 255, 255, 0.85);
+            --border-color: rgba(203, 213, 225, 0.8);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --accent-primary: #4f46e5;
+            --accent-secondary: #9333ea;
+            --accent-glow: rgba(79, 70, 229, 0.2);
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .custom-glass {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+        }
+
+        .custom-glow {
+            box-shadow: 0 0 30px var(--accent-glow);
+        }
+
+        .accent-gradient-text {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .accent-bg {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg-base);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-primary);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white" data-theme="dark">
+
+    <!-- Top Navigation -->
+    <header class="sticky top-0 z-50 custom-glass border-b border-[var(--border-color)] px-4 lg:px-8 py-3.5 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-xl accent-bg flex items-center justify-center custom-glow shadow-lg">
+                <i data-lucide="cpu" class="w-6 h-6 text-white"></i>
+            </div>
+            <div>
+                <span class="text-xl font-extrabold tracking-tight accent-gradient-text">NEXUS AI</span>
+                <span class="hidden sm:inline-block ml-2 px-2 py-0.5 text-[10px] font-mono font-semibold uppercase tracking-widest rounded-full border border-[var(--border-color)] text-[var(--accent-primary)] bg-[var(--bg-surface)]">Free Prompt Studio</span>
+            </div>
+        </div>
+
+        <!-- Right Controls -->
+        <div class="flex items-center space-x-3">
+            <!-- AZ / EN Language Toggle -->
+            <button onclick="toggleLanguage()" id="langBtn" class="flex items-center space-x-1.5 px-3 py-2 rounded-xl custom-glass text-xs font-mono font-bold hover:border-[var(--accent-primary)] transition-all">
+                <i data-lucide="globe" class="w-4 h-4 text-[var(--accent-primary)]"></i>
+                <span id="langLabel">EN</span>
+            </button>
+
+            <!-- Theme Selector -->
+            <div class="relative group">
+                <button class="flex items-center space-x-2 px-3 py-2 rounded-xl custom-glass text-xs font-medium hover:border-[var(--accent-primary)] transition-all">
+                    <i data-lucide="palette" class="w-4 h-4 text-[var(--accent-primary)]"></i>
+                    <span class="hidden sm:inline" id="themeText">Theme</span>
+                    <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--text-muted)]"></i>
+                </button>
+                <div class="absolute right-0 mt-2 w-48 py-2 rounded-xl custom-glass shadow-2xl hidden group-hover:block border border-[var(--border-color)] z-50">
+                    <button onclick="setTheme('dark')" class="w-full text-left px-4 py-2 text-xs hover:bg-[var(--accent-primary)]/20 flex items-center space-x-2 transition-colors">
+                        <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span><span>Cyber Dark</span>
+                    </button>
+                    <button onclick="setTheme('cyberpunk')" class="w-full text-left px-4 py-2 text-xs hover:bg-[var(--accent-primary)]/20 flex items-center space-x-2 transition-colors">
+                        <span class="w-2.5 h-2.5 rounded-full bg-pink-500"></span><span>Cyberpunk Neon</span>
+                    </button>
+                    <button onclick="setTheme('matrix')" class="w-full text-left px-4 py-2 text-xs hover:bg-[var(--accent-primary)]/20 flex items-center space-x-2 transition-colors">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span><span>OLED Matrix</span>
+                    </button>
+                    <button onclick="setTheme('sapphire')" class="w-full text-left px-4 py-2 text-xs hover:bg-[var(--accent-primary)]/20 flex items-center space-x-2 transition-colors">
+                        <span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span><span>Midnight Sapphire</span>
+                    </button>
+                    <button onclick="setTheme('light')" class="w-full text-left px-4 py-2 text-xs hover:bg-[var(--accent-primary)]/20 flex items-center space-x-2 transition-colors">
+                        <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span><span>Light Cyber</span>
+                    </button>
+                </div>
+            </div>
+
+            <span class="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-xl custom-glass text-xs font-semibold text-emerald-400">
+                <i data-lucide="infinity" class="w-4 h-4"></i>
+                <span id="freeBadge">Free · Unlimited · No API</span>
+            </span>
+        </div>
+    </header>
+
+    <!-- Main Workspace Layout -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left Column: Generator Controls & Tabs (7 Cols) -->
+        <div class="lg:col-span-7 flex flex-col space-y-6">
+
+            <!-- Category Tabs -->
+            <div class="flex p-1.5 rounded-2xl custom-glass space-x-1">
+                <button onclick="switchTab('video')" id="tab-video" class="flex-1 py-3 px-3 rounded-xl flex items-center justify-center space-x-2 font-semibold text-xs sm:text-sm transition-all accent-bg text-white shadow-md">
+                    <i data-lucide="video" class="w-4 h-4"></i>
+                    <span id="tabVideoText">Video Prompts</span>
+                </button>
+                <button onclick="switchTab('photo')" id="tab-photo" class="flex-1 py-3 px-3 rounded-xl flex items-center justify-center space-x-2 font-semibold text-xs sm:text-sm text-[var(--text-muted)] hover:text-[var(--text-main)] transition-all">
+                    <i data-lucide="image" class="w-4 h-4"></i>
+                    <span id="tabPhotoText">Photo & Art</span>
+                </button>
+                <button onclick="switchTab('file')" id="tab-file" class="flex-1 py-3 px-3 rounded-xl flex items-center justify-center space-x-2 font-semibold text-xs sm:text-sm text-[var(--text-muted)] hover:text-[var(--text-main)] transition-all">
+                    <i data-lucide="code" class="w-4 h-4"></i>
+                    <span id="tabFileText">Files & Apps</span>
+                </button>
+            </div>
+
+            <!-- Generator Card Panel -->
+            <div class="custom-glass rounded-3xl p-6 shadow-xl space-y-6">
+                <div class="flex items-center justify-between border-b border-[var(--border-color)] pb-4">
+                    <div>
+                        <h2 class="text-lg font-bold flex items-center space-x-2">
+                            <span id="panelTitle">Cinematic Video Prompt Architect</span>
+                        </h2>
+                        <p class="text-xs text-[var(--text-muted)] mt-1" id="panelSubtitle">Build a detailed video prompt from your idea. Your text stays as written; no translation service is used.</p>
+                    </div>
+                    <span class="px-2.5 py-1 rounded-lg text-xs font-mono bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--accent-primary)]">Local prompt builder</span>
+                </div>
+
+                <!-- Dynamic Form Inputs -->
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2" id="labelSubject">What do you want to create?</label>
+                        <textarea id="subjectInput" oninput="saveState()" rows="3" placeholder="Describe your idea, task, or goal..." class="w-full px-4 py-3 rounded-xl custom-glass border border-[var(--border-color)] text-sm focus:outline-none focus:border-[var(--accent-primary)] transition-all resize-y"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2" id="labelDetails">Extra details, requirements, or constraints (optional)</label>
+                        <textarea id="detailsInput" oninput="saveState()" rows="2" placeholder="Add details, audience, length, things to include or avoid..." class="w-full px-4 py-3 rounded-xl custom-glass border border-[var(--border-color)] text-sm focus:outline-none focus:border-[var(--accent-primary)] transition-all resize-y"></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2" id="labelOptics">Camera / Optics Style</label>
+                            <select id="styleSelect" onchange="saveState()" class="w-full px-4 py-3 rounded-xl custom-glass border border-[var(--border-color)] text-sm focus:outline-none focus:border-[var(--accent-primary)] transition-all bg-[var(--bg-surface)]">
+                                <option value="Cinematic Anamorphic, 35mm lens">Cinematic Anamorphic, 35mm lens</option>
+                                <option value="FPV Drone Shot, 4K, 60fps">FPV Drone Shot, 4K, 60fps</option>
+                                <option value="Macro Close-Up, Shallow Depth of Field">Macro Close-Up, Shallow Depth of Field</option>
+                                <option value="Isometric 3D Render Studio">Isometric 3D Render Studio</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2" id="labelLighting">Lighting & Atmosphere</label>
+                            <select id="lightingSelect" onchange="saveState()" class="w-full px-4 py-3 rounded-xl custom-glass border border-[var(--border-color)] text-sm focus:outline-none focus:border-[var(--accent-primary)] transition-all bg-[var(--bg-surface)]">
+                                <option value="Neon Glow & Volumetric Rain">Neon Glow & Volumetric Rain</option>
+                                <option value="Golden Hour Cinematic Sunlight">Golden Hour Cinematic Sunlight</option>
+                                <option value="Cyberpunk Neon Cyan & Magenta">Cyberpunk Neon Cyan & Magenta</option>
+                                <option value="Moody Noir Shadows & Contrast">Moody Noir Shadows & Contrast</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2" id="labelEnhancers">Advanced Enhancers & Modifiers</label>
+                        <div class="flex flex-wrap gap-2">
+                            <label class="px-3 py-1.5 rounded-lg custom-glass text-xs flex items-center space-x-2 cursor-pointer border border-[var(--border-color)] hover:border-[var(--accent-primary)]">
+                                <input type="checkbox" id="chk1" onchange="saveState()" checked class="accent-indigo-500 rounded">
+                                <span id="enhancer1">Ray Tracing Reflections</span>
+                            </label>
+                            <label class="px-3 py-1.5 rounded-lg custom-glass text-xs flex items-center space-x-2 cursor-pointer border border-[var(--border-color)] hover:border-[var(--accent-primary)]">
+                                <input type="checkbox" id="chk2" onchange="saveState()" checked class="accent-indigo-500 rounded">
+                                <span id="enhancer2">Unreal Engine 5 Render</span>
+                            </label>
+                            <label class="px-3 py-1.5 rounded-lg custom-glass text-xs flex items-center space-x-2 cursor-pointer border border-[var(--border-color)] hover:border-[var(--accent-primary)]">
+                                <input type="checkbox" id="chk3" onchange="saveState()" checked class="accent-indigo-500 rounded">
+                                <span id="enhancer3">8K Photorealistic Detail</span>
+                            </label>
+                            <label class="px-3 py-1.5 rounded-lg custom-glass text-xs flex items-center space-x-2 cursor-pointer border border-[var(--border-color)] hover:border-[var(--accent-primary)]">
+                                <input type="checkbox" id="chk4" onchange="saveState()" checked class="accent-indigo-500 rounded">
+                                <span id="enhancer4">Cinematic Color Grading</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Button -->
+                <div class="pt-2 flex items-center space-x-3">
+                    <button onclick="generatePrompt()" class="flex-1 py-3.5 px-6 rounded-xl accent-bg text-white font-bold text-sm custom-glow flex items-center justify-center space-x-2 hover:opacity-95 transition-all shadow-lg">
+                        <i data-lucide="sparkles" class="w-5 h-5"></i>
+                        <span id="btnGenerateText">Generate & Optimize Prompt</span>
+                    </button>
+                    <button onclick="resetForm()" class="p-3.5 rounded-xl custom-glass border border-[var(--border-color)] hover:border-[var(--accent-primary)] transition-all text-[var(--text-muted)] hover:text-[var(--text-main)]" title="Reset">
+                        <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Column: Prompt output and saved library -->
+        <div class="lg:col-span-5 flex flex-col space-y-6">
+
+            <!-- Prompt Output Card -->
+            <div class="custom-glass rounded-3xl p-6 shadow-xl flex flex-col space-y-4 flex-1">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="terminal" class="w-4 h-4 text-[var(--accent-primary)]"></i>
+                        <h3 class="font-bold text-sm" id="outputTitle">Generated Master Prompt</h3>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="flex h-2 w-2 relative">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        <span class="text-[10px] font-mono text-[var(--text-muted)]" id="localStatus" aria-live="polite">Runs in your browser · No API key</span>
+                    </div>
+                </div>
+
+                <!-- Output Box -->
+                <div class="relative flex-1 min-h-[180px] rounded-2xl bg-[var(--bg-base)] border border-[var(--border-color)] p-4 font-mono text-xs text-[var(--text-muted)] overflow-y-auto leading-relaxed whitespace-pre-wrap">
+                    <p id="outputText">Your prompt will appear here. Describe your idea and select Generate.</p>
+                </div>
+
+                <!-- Copy & Export Actions -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <button onclick="copyPrompt()" class="py-3 px-4 rounded-xl accent-bg text-white font-semibold text-xs flex items-center justify-center space-x-2 custom-glow hover:opacity-90 transition-all">
+                        <i data-lucide="copy" class="w-4 h-4"></i>
+                        <span id="btnCopyText">Copy Prompt</span>
+                    </button>
+                    <button onclick="savePrompt()" class="py-3 px-4 rounded-xl custom-glass border border-[var(--border-color)] hover:border-[var(--accent-primary)] font-semibold text-xs flex items-center justify-center space-x-2 transition-all">
+                        <i data-lucide="bookmark" class="w-4 h-4 text-[var(--accent-primary)]"></i>
+                        <span id="btnSaveText">Save to Library</span>
+                    </button>
+                    <button onclick="downloadPrompt()" class="py-3 px-4 rounded-xl custom-glass border border-[var(--border-color)] hover:border-[var(--accent-primary)] font-semibold text-xs flex items-center justify-center space-x-2 transition-all">
+                        <i data-lucide="download" class="w-4 h-4 text-[var(--accent-primary)]"></i>
+                        <span id="btnDownloadText">Download .txt</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="custom-glass rounded-3xl p-6 shadow-xl space-y-4">
+                <div class="flex items-center justify-between border-b border-[var(--border-color)] pb-3">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="library" class="w-4 h-4 text-[var(--accent-primary)]"></i>
+                        <h3 class="font-bold text-sm" id="libraryTitle">Saved prompts</h3>
+                    </div>
+                    <span class="text-xs font-mono text-[var(--text-muted)]" id="libraryCount">0 saved</span>
+                </div>
+                <p class="text-xs text-[var(--text-muted)]" id="libraryNote">Saved in this browser only. No account or cloud sync.</p>
+                <div id="promptLibrary" class="space-y-2 max-h-72 overflow-y-auto" aria-live="polite"></div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="custom-glass border-t border-[var(--border-color)] py-4 px-6 text-center text-xs text-[var(--text-muted)] font-mono">
+        <p id="footerText">NEXUS AI Studio · Free prompt building in your browser · No account, API key, or generation limit.</p>
+    </footer>
+
+    <script>
+        const STATE_KEY = 'nexus_studio_state';
+        const LIBRARY_KEY = 'nexus_prompt_library';
+        const THEMES = ['dark', 'cyberpunk', 'matrix', 'sapphire', 'light'];
+        const TABS = ['video', 'photo', 'file'];
+        const OPTIONS = {
+            video: {
+                styleLabel: 'Camera / motion style',
+                lightingLabel: 'Lighting & atmosphere',
+                styles: ['Cinematic Anamorphic, 35mm lens', 'FPV Drone Shot, 4K, 60fps', 'Macro Close-Up, Shallow Depth of Field', 'Isometric 3D Render Studio'],
+                lighting: ['Neon Glow & Volumetric Rain', 'Golden Hour Cinematic Sunlight', 'Cyberpunk Neon Cyan & Magenta', 'Moody Noir Shadows & Contrast'],
+                enhancers: ['Smooth natural motion', 'Detailed visual storytelling', 'Consistent characters and setting', 'Cinematic color grading']
+            },
+            photo: {
+                styleLabel: 'Photography / art direction',
+                lightingLabel: 'Lighting & atmosphere',
+                styles: ['Editorial portrait, 85mm lens', 'Wide-angle landscape photography', 'Macro close-up, shallow depth of field', 'Isometric 3D digital illustration'],
+                lighting: ['Soft studio lighting', 'Golden hour sunlight', 'Dramatic high-contrast lighting', 'Cool neon palette'],
+                enhancers: ['Fine image detail', 'Natural textures', 'Balanced composition', 'Rich color grading']
+            },
+            file: {
+                styleLabel: 'Code / writing approach',
+                lightingLabel: 'Quality priorities',
+                styles: ['Clean, maintainable solution', 'Beginner-friendly with explanations', 'Production-ready architecture', 'Minimal dependencies'],
+                lighting: ['Accessible and responsive', 'Secure by design', 'Performance-focused', 'Clear documentation and tests'],
+                enhancers: ['Accessible design', 'Input validation', 'Clear error handling', 'Include relevant tests']
+            }
+        };
+        const TAB_COPY = {
+            EN: {
+                video: ['Cinematic Video Prompt Builder', 'Build a detailed video prompt from your idea. Your text stays as written; no translation service is used.'],
+                photo: ['Photo & Art Prompt Builder', 'Shape an image prompt with camera, lighting, and visual quality direction.'],
+                file: ['Writing & App Prompt Builder', 'Create clear instructions for coding, writing, research, and other tasks.']
+            },
+            AZ: {
+                video: ['Kino Video Prompt Qurucusu', 'Fikriniz əsasında video promptu yaradın. Mətniniz dəyişdirilmir və tərcümə xidməti istifadə olunmur.'],
+                photo: ['Foto və İncəsənət Prompt Qurucusu', 'Kamera, işıqlandırma və vizual keyfiyyət istiqaməti ilə şəkil promptu hazırlayın.'],
+                file: ['Yazı və Tətbiq Prompt Qurucusu', 'Kod, yazı, araşdırma və digər tapşırıqlar üçün aydın təlimatlar yaradın.']
+            }
+        };
+        const DEFAULT_OUTPUT = 'Your prompt will appear here. Describe your idea and select Generate.';
+        let currentTab = 'video';
+        let currentLang = 'EN';
+        let currentTheme = 'dark';
+        let savedPrompts = [];
+
+        if (window.lucide) window.lucide.createIcons();
+
+        function showStatus(message) {
+            document.getElementById('localStatus').textContent = message;
+        }
+
+        function getPromptText() {
+            const text = document.getElementById('outputText').textContent.trim();
+            return text === DEFAULT_OUTPUT ? '' : text;
+        }
+
+        function saveState() {
+            const state = {
+                theme: currentTheme,
+                lang: currentLang,
+                tab: currentTab,
+                subject: document.getElementById('subjectInput').value,
+                details: document.getElementById('detailsInput').value,
+                style: document.getElementById('styleSelect').value,
+                lighting: document.getElementById('lightingSelect').value,
+                checks: ['chk1', 'chk2', 'chk3', 'chk4'].map(id => document.getElementById(id).checked),
+                output: getPromptText()
+            };
+            try {
+                localStorage.setItem(STATE_KEY, JSON.stringify(state));
+            } catch (error) {
+                console.error('Unable to save builder settings', error);
+                showStatus('Could not save settings. Check this browser’s storage permissions.');
+            }
+        }
+
+        function setTheme(themeName, shouldSave = true) {
+            if (!THEMES.includes(themeName)) return;
+            currentTheme = themeName;
+            document.body.setAttribute('data-theme', themeName);
+            if (shouldSave) saveState();
+        }
+
+        function setOptions(select, values, selectedValue) {
+            select.replaceChildren(...values.map(value => {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = value;
+                return option;
+            }));
+            if (values.includes(selectedValue)) select.value = selectedValue;
+        }
+
+        function switchTab(tab, shouldSave = true, resetOptions = true) {
+            if (!TABS.includes(tab)) return;
+            currentTab = tab;
+            TABS.forEach(name => {
+                const button = document.getElementById('tab-' + name);
+                button.className = name === tab
+                    ? 'flex-1 py-3 px-3 rounded-xl flex items-center justify-center space-x-2 font-semibold text-xs sm:text-sm transition-all accent-bg text-white shadow-md'
+                    : 'flex-1 py-3 px-3 rounded-xl flex items-center justify-center space-x-2 font-semibold text-xs sm:text-sm text-[var(--text-muted)] hover:text-[var(--text-main)] transition-all';
+                button.setAttribute('aria-pressed', String(name === tab));
+            });
+
+            const copy = TAB_COPY[currentLang][tab];
+            const options = OPTIONS[tab];
+            document.getElementById('panelTitle').textContent = copy[0];
+            document.getElementById('panelSubtitle').textContent = copy[1];
+            document.getElementById('labelOptics').textContent = options.styleLabel;
+            document.getElementById('labelLighting').textContent = options.lightingLabel;
+            options.enhancers.forEach((label, index) => {
+                document.getElementById('enhancer' + (index + 1)).textContent = label;
+            });
+
+            if (resetOptions) {
+                setOptions(document.getElementById('styleSelect'), options.styles);
+                setOptions(document.getElementById('lightingSelect'), options.lighting);
+            }
+            if (shouldSave) saveState();
+        }
+
+        function generatePrompt() {
+            const subject = document.getElementById('subjectInput').value.trim();
+            if (!subject) {
+                showStatus(currentLang === 'EN' ? 'Add an idea or task first.' : 'Əvvəlcə fikir və ya tapşırıq daxil edin.');
+                document.getElementById('subjectInput').focus();
+                return;
+            }
+
+            const details = document.getElementById('detailsInput').value.trim();
+            const style = document.getElementById('styleSelect').value;
+            const lighting = document.getElementById('lightingSelect').value;
+            const enhancements = ['chk1', 'chk2', 'chk3', 'chk4']
+                .filter(id => document.getElementById(id).checked)
+                .map(id => OPTIONS[currentTab].enhancers[Number(id.slice(-1)) - 1]);
+            const extra = details ? `\n\nAdditional details and constraints:\n${details}` : '';
+            const quality = enhancements.length ? `\n\nQuality priorities: ${enhancements.join('; ')}.` : '';
+            let prompt;
+
+            if (currentTab === 'video') {
+                prompt = `Create a polished video based on this idea:\n${subject}\n\nCamera and motion direction: ${style}.\nLighting and atmosphere: ${lighting}.\nKeep the scene coherent, the motion intentional, and the subject recognizable throughout.${extra}${quality}\n\nReturn a concise, production-ready video-generation prompt.`;
+            } else if (currentTab === 'photo') {
+                prompt = `Create a compelling image based on this idea:\n${subject}\n\nArt and camera direction: ${style}.\nLighting and atmosphere: ${lighting}.\nUse a clear focal point, intentional composition, and cohesive visual details.${extra}${quality}\n\nReturn a concise, production-ready image-generation prompt.`;
+            } else {
+                prompt = `You are a skilled, thoughtful assistant. Help with this task:\n${subject}${extra}\n\nApproach: ${style}.\nPriorities: ${lighting}.${quality}\n\nBefore answering, identify any assumptions. Follow the requirements closely, organize the result clearly, and verify that the response addresses the requested task. If essential information is missing, ask focused questions instead of inventing facts.`;
+            }
+
+            document.getElementById('outputText').textContent = prompt;
+            saveState();
+            showStatus(currentLang === 'EN' ? 'Prompt created locally · no API used.' : 'Prompt yerli yaradıldı · API istifadə olunmadı.');
+        }
+
+        function resetForm() {
+            document.getElementById('subjectInput').value = '';
+            document.getElementById('detailsInput').value = '';
+            switchTab(currentTab, false, true);
+            ['chk1', 'chk2', 'chk3', 'chk4'].forEach(id => {
+                document.getElementById(id).checked = true;
+            });
+            document.getElementById('outputText').textContent = DEFAULT_OUTPUT;
+            saveState();
+            showStatus(currentLang === 'EN' ? 'Builder reset.' : 'Qurucu sıfırlandı.');
+        }
+
+        async function copyPrompt() {
+            const text = getPromptText();
+            if (!text) {
+                showStatus(currentLang === 'EN' ? 'Create a prompt before copying.' : 'Kopyalamazdan əvvəl prompt yaradın.');
+                return;
+            }
+
+            try {
+                let copied = false;
+                if (navigator.clipboard && window.isSecureContext) {
+                    try {
+                        await navigator.clipboard.writeText(text);
+                        copied = true;
+                    } catch (error) {
+                        console.warn('Clipboard API unavailable; trying browser copy fallback', error);
+                    }
+                }
+                if (!copied) {
+                    const temporaryInput = document.createElement('textarea');
+                    temporaryInput.value = text;
+                    temporaryInput.style.position = 'fixed';
+                    temporaryInput.style.opacity = '0';
+                    document.body.appendChild(temporaryInput);
+                    temporaryInput.select();
+                    const copied = document.execCommand('copy');
+                    temporaryInput.remove();
+                    if (!copied) throw new Error('Clipboard copy was denied by the browser.');
+                }
+                showStatus(currentLang === 'EN' ? 'Prompt copied to clipboard.' : 'Prompt buferə kopyalandı.');
+            } catch (error) {
+                console.error('Unable to copy prompt', error);
+                showStatus('Copy failed. Your browser may block clipboard access; select the prompt and copy it manually.');
+            }
+        }
+
+        function savePrompt() {
+            const prompt = getPromptText();
+            if (!prompt) {
+                showStatus(currentLang === 'EN' ? 'Create a prompt before saving.' : 'Yadda saxlamazdan əvvəl prompt yaradın.');
+                return;
+            }
+
+            const title = document.getElementById('subjectInput').value.trim().replace(/\s+/g, ' ').slice(0, 72);
+            const item = {
+                id: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+                title,
+                prompt,
+                details: document.getElementById('detailsInput').value,
+                tab: currentTab,
+                createdAt: new Date().toISOString()
+            };
+            if (writeLibrary([item, ...savedPrompts])) {
+                renderLibrary();
+                showStatus(currentLang === 'EN' ? 'Prompt saved in this browser.' : 'Prompt bu brauzerdə yadda saxlanıldı.');
+            }
+        }
+
+        function writeLibrary(prompts) {
+            try {
+                localStorage.setItem(LIBRARY_KEY, JSON.stringify(prompts));
+                savedPrompts = prompts;
+                return true;
+            } catch (error) {
+                console.error('Unable to save prompt library', error);
+                showStatus('Could not save the library. Browser storage may be full or disabled.');
+                return false;
+            }
+        }
+
+        function renderLibrary() {
+            const container = document.getElementById('promptLibrary');
+            const count = document.getElementById('libraryCount');
+            count.textContent = `${savedPrompts.length} ${currentLang === 'EN' ? 'saved' : 'yadda saxlanılıb'}`;
+            container.replaceChildren();
+
+            if (savedPrompts.length === 0) {
+                const empty = document.createElement('p');
+                empty.className = 'text-xs text-[var(--text-muted)] py-2';
+                empty.textContent = currentLang === 'EN' ? 'Your saved prompts will show up here.' : 'Yadda saxladığınız promptlar burada görünəcək.';
+                container.appendChild(empty);
+                return;
+            }
+
+            savedPrompts.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'flex items-center gap-2 p-2.5 rounded-xl custom-glass border border-[var(--border-color)]';
+                const title = document.createElement('button');
+                title.type = 'button';
+                title.className = 'min-w-0 flex-1 text-left text-xs font-medium truncate hover:text-[var(--accent-primary)]';
+                title.textContent = item.title || item.prompt.slice(0, 60);
+                title.title = item.title || item.prompt.slice(0, 120);
+                title.addEventListener('click', () => loadSavedPrompt(item.id));
+                const category = document.createElement('span');
+                category.className = 'text-[10px] text-[var(--text-muted)] capitalize';
+                category.textContent = item.tab;
+                const remove = document.createElement('button');
+                remove.type = 'button';
+                remove.className = 'px-2 py-1 rounded-lg text-xs text-rose-400 hover:bg-rose-500/10';
+                remove.textContent = '×';
+                remove.setAttribute('aria-label', `Delete ${item.title || 'saved prompt'}`);
+                remove.addEventListener('click', () => deleteSavedPrompt(item.id));
+                row.append(title, category, remove);
+                container.appendChild(row);
+            });
+        }
+
+        function loadSavedPrompt(id) {
+            const item = savedPrompts.find(prompt => prompt.id === id);
+            if (!item) return;
+            switchTab(item.tab, false, true);
+            document.getElementById('subjectInput').value = item.title;
+            document.getElementById('detailsInput').value = item.details || '';
+            document.getElementById('outputText').textContent = item.prompt;
+            saveState();
+            showStatus(currentLang === 'EN' ? 'Saved prompt loaded.' : 'Yadda saxlanmış prompt açıldı.');
+        }
+
+        function deleteSavedPrompt(id) {
+            const updatedPrompts = savedPrompts.filter(item => item.id !== id);
+            if (writeLibrary(updatedPrompts)) renderLibrary();
+        }
+
+        function downloadPrompt() {
+            const text = getPromptText();
+            if (!text) {
+                showStatus(currentLang === 'EN' ? 'Create a prompt before downloading.' : 'Yükləməzdən əvvəl prompt yaradın.');
+                return;
+            }
+            const blobUrl = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = `nexus-prompt-${new Date().toISOString().slice(0, 10)}.txt`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+            showStatus(currentLang === 'EN' ? 'Prompt downloaded as a text file.' : 'Prompt mətn faylı kimi yükləndi.');
+        }
+
+        function loadState() {
+            try {
+                const state = JSON.parse(localStorage.getItem(STATE_KEY) || '{}');
+                currentLang = state.lang === 'AZ' ? 'AZ' : 'EN';
+                currentTheme = THEMES.includes(state.theme) ? state.theme : 'dark';
+                currentTab = TABS.includes(state.tab) ? state.tab : 'video';
+                setTheme(currentTheme, false);
+                switchTab(currentTab, false, true);
+                if (typeof state.subject === 'string') document.getElementById('subjectInput').value = state.subject;
+                if (typeof state.details === 'string') document.getElementById('detailsInput').value = state.details;
+                if (typeof state.style === 'string') document.getElementById('styleSelect').value = state.style;
+                if (typeof state.lighting === 'string') document.getElementById('lightingSelect').value = state.lighting;
+                if (Array.isArray(state.checks)) {
+                    state.checks.forEach((checked, index) => {
+                        if (typeof checked === 'boolean') document.getElementById('chk' + (index + 1)).checked = checked;
+                    });
+                }
+                if (typeof state.output === 'string' && state.output) {
+                    document.getElementById('outputText').textContent = state.output;
+                }
+                updateLanguage();
+            } catch (error) {
+                console.error('Unable to load saved builder settings', error);
+                showStatus('Saved settings could not be read. Your prompt builder is still available.');
+            }
+
+            try {
+                const library = JSON.parse(localStorage.getItem(LIBRARY_KEY) || '[]');
+                savedPrompts = Array.isArray(library) ? library.filter(item =>
+                    item && typeof item.id === 'string' &&
+                    typeof item.prompt === 'string' &&
+                    TABS.includes(item.tab)
+                ) : [];
+            } catch (error) {
+                console.error('Unable to load saved prompt library', error);
+                savedPrompts = [];
+                showStatus('Saved prompts could not be read. You can still create new prompts.');
+            }
+            renderLibrary();
+        }
+
+        function updateLanguage() {
+            document.getElementById('langLabel').textContent = currentLang;
+            document.getElementById('themeText').textContent = currentLang === 'EN' ? 'Theme' : 'Tema';
+            document.getElementById('tabVideoText').textContent = currentLang === 'EN' ? 'Video Prompts' : 'Video Promptlar';
+            document.getElementById('tabPhotoText').textContent = currentLang === 'EN' ? 'Photo & Art' : 'Foto və İncəsənət';
+            document.getElementById('tabFileText').textContent = currentLang === 'EN' ? 'Writing & Apps' : 'Yazı və Tətbiqlər';
+            document.getElementById('labelSubject').textContent = currentLang === 'EN' ? 'What do you want to create?' : 'Nə yaratmaq istəyirsiniz?';
+            document.getElementById('labelDetails').textContent = currentLang === 'EN' ? 'Extra details, requirements, or constraints (optional)' : 'Əlavə detallar, tələblər və ya məhdudiyyətlər (istəyə bağlı)';
+            document.getElementById('labelEnhancers').textContent = currentLang === 'EN' ? 'Quality options' : 'Keyfiyyət seçimləri';
+            document.getElementById('btnGenerateText').textContent = currentLang === 'EN' ? 'Generate Prompt' : 'Prompt yarat';
+            document.getElementById('outputTitle').textContent = currentLang === 'EN' ? 'Your prompt' : 'Sizin promptunuz';
+            document.getElementById('btnCopyText').textContent = currentLang === 'EN' ? 'Copy' : 'Kopyala';
+            document.getElementById('btnSaveText').textContent = currentLang === 'EN' ? 'Save prompt' : 'Yadda saxla';
+            document.getElementById('btnDownloadText').textContent = currentLang === 'EN' ? 'Download .txt' : '.txt yüklə';
+            document.getElementById('libraryTitle').textContent = currentLang === 'EN' ? 'Saved prompts' : 'Yadda saxlanmış promptlar';
+            document.getElementById('libraryNote').textContent = currentLang === 'EN' ? 'Saved in this browser only. No account or cloud sync.' : 'Yalnız bu brauzerdə saxlanılır. Hesab və bulud sinxronizasiyası yoxdur.';
+            document.getElementById('freeBadge').textContent = currentLang === 'EN' ? 'Free · Unlimited · No API' : 'Pulsuz · Limitsiz · API yoxdur';
+            document.getElementById('footerText').textContent = currentLang === 'EN'
+                ? 'NEXUS AI Studio · Free prompt building in your browser · No account, API key, or generation limit.'
+                : 'NEXUS AI Studio · Brauzerinizdə pulsuz prompt yaradılması · Hesab, API açarı və limit yoxdur.';
+            switchTab(currentTab, false, false);
+            renderLibrary();
+        }
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'EN' ? 'AZ' : 'EN';
+            updateLanguage();
+            saveState();
+        }
+
+        window.addEventListener('DOMContentLoaded', loadState);
+    </script>
+</body>
+</html>
