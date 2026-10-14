@@ -573,30 +573,28 @@
             const extra = details ? `\n\nAdditional details and constraints:\n${details}` : '';
             const quality = enhancements.length ? `\n\nQuality priorities: ${enhancements.join('; ')}.` : '';
             const mode = currentTab === 'video' ? 'video' : currentTab === 'photo' ? 'image' : 'text';
-            const targetGuidance = aiTargetType === mode
+            const targetGuidance = mode === 'text'
+                ? aiTargetType === 'assistant'
+                    ? 'Perform the requested task directly and return its result, not instructions for doing it.'
+                    : 'This target is not primarily a text assistant. Complete the requested text task only if supported; otherwise briefly state that limitation. Do not create an image or video.'
+                : aiTargetType === mode
                 ? mode === 'video'
                     ? 'Use a direct natural-language brief with clear subject action, camera movement, lighting, and continuity. Do not add undocumented parameter syntax.'
                     : mode === 'image'
                         ? 'Use natural-language visual directions with a clear subject, composition, lighting, and style. Keep all constraints explicit.'
                         : ''
                 : aiTargetType === 'assistant'
-                    ? 'Use plain language, preserve the constraints, and return the requested result in a clearly structured format.'
-                    : `This target is not primarily a ${mode} generator. Keep the requested ${mode} output explicit; if it cannot produce that output, state the limitation rather than substituting another media type.`;
+                    ? `Perform the requested ${mode} task directly if this AI supports it. If it cannot create the requested media, briefly state that limitation; do not return instructions or a description as a substitute.`
+                    : `This target is not primarily a ${mode} generator. If it cannot create the requested ${mode}, briefly state that limitation; do not substitute another media type or return instructions instead.`;
             const target = `AI target: ${aiTarget}. ${targetGuidance}`;
             let prompt;
 
             if (currentTab === 'video') {
-                const videoInstruction = aiTargetType === 'video'
-                    ? 'Generate one moving video clip from the brief.'
-                    : 'Write a ready-to-use video-generation prompt as text; do not generate media directly.';
-                prompt = `${target}\n\nVIDEO ONLY: ${videoInstruction} The requested media must be a moving video clip, never a still image, photo, poster, storyboard, or static frame.\n\nCreate a polished video based on this idea:\n${subject}\n\nCamera and motion direction: ${style}.\nLighting and atmosphere: ${lighting}.\nKeep the scene coherent, the motion intentional, and the subject recognizable throughout.${extra}${quality}\n\nFinal requirement: produce video, not an image. If video generation is unavailable, return only text explaining the limitation or provide the video prompt as text; never create or substitute an image.`;
+                prompt = `DIRECT ACTION REQUEST — NOT A PROMPT-WRITING REQUEST.\nUse your built-in video-generation capability now to create and return the actual moving video. Do not write, rewrite, improve, explain, or suggest a prompt. Do not return a plan, storyboard, or textual description in place of the video. If you cannot generate video in this chat, say only that you cannot generate video here; do not provide a substitute prompt and do not create an image.\n\n${target}\n\nVIDEO OUTPUT ONLY: Create one moving video clip from this request. Never create a still image, photo, poster, or static frame.\n\nVideo request:\n${subject}\n\nCamera and motion direction: ${style}.\nLighting and atmosphere: ${lighting}.\nKeep the scene coherent, the motion intentional, and the subject recognizable throughout.${extra}${quality}\n\nFinal output must be the generated video itself, not text about how to generate it.`;
             } else if (currentTab === 'photo') {
-                const imageInstruction = aiTargetType === 'image'
-                    ? 'Create one still image based on the brief.'
-                    : 'Write a ready-to-use image-generation prompt as text; do not generate media directly.';
-                prompt = `${target}\n\nIMAGE ONLY: ${imageInstruction} Do not turn this request into a video.\n\nCreate a compelling image based on this idea:\n${subject}\n\nArt and camera direction: ${style}.\nLighting and atmosphere: ${lighting}.\nUse a clear focal point, intentional composition, and cohesive visual details.${extra}${quality}\n\nReturn a concise, production-ready image-generation prompt.`;
+                prompt = `DIRECT ACTION REQUEST — NOT A PROMPT-WRITING REQUEST.\nUse your built-in image-generation capability now to create and return the actual image. Do not write, rewrite, improve, explain, or suggest a prompt. Do not return a textual description in place of the image. If you cannot generate images in this chat, say only that you cannot generate an image here; do not provide a substitute prompt and do not create a video.\n\n${target}\n\nIMAGE OUTPUT ONLY: Create one still image from this request. Do not turn it into a video.\n\nImage request:\n${subject}\n\nArt and camera direction: ${style}.\nLighting and atmosphere: ${lighting}.\nUse a clear focal point, intentional composition, and cohesive visual details.${extra}${quality}\n\nFinal output must be the generated image itself, not text about how to generate it.`;
             } else {
-                prompt = `${target}\n\nYou are a skilled, thoughtful assistant. Help with this task:\n${subject}${extra}\n\nApproach: ${style}.\nPriorities: ${lighting}.${quality}\n\nBefore answering, identify any assumptions. Follow the requirements closely, organize the result clearly, and verify that the response addresses the requested task. If essential information is missing, ask focused questions instead of inventing facts. Return text only; do not create an image or video.`;
+                prompt = `DIRECT TASK REQUEST — NOT A PROMPT-WRITING REQUEST.\nComplete the task below and return the finished result. Do not write, rewrite, improve, explain, or suggest a prompt or instructions for doing the task.\n\n${target}\n\nTask:\n${subject}${extra}\n\nApproach: ${style}.\nPriorities: ${lighting}.${quality}\n\nBefore answering, identify any assumptions. Follow the requirements closely, organize the result clearly, and verify that the response addresses the requested task. If essential information is missing, ask focused questions instead of inventing facts. Return text only; do not create an image or video.`;
             }
 
             document.getElementById('outputText').textContent = prompt;
