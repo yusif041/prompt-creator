@@ -320,11 +320,11 @@
 
                 <!-- Action Button -->
                 <div class="pt-2 flex items-center space-x-3">
-                    <button onclick="generatePrompt()" class="flex-1 py-3.5 px-6 rounded-xl accent-bg text-white font-bold text-sm custom-glow flex items-center justify-center space-x-2 hover:opacity-95 transition-all shadow-lg">
+                    <button onclick="generatePrompt()" class="flex-1 py-3.5 px-6 rounded-xl accent-bg text-white font-bold text-sm custom-glow flex items-center justify-center space-x-2 hover:brightness-110 active:brightness-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)] transition-colors shadow-lg">
                         <i data-lucide="sparkles" class="w-5 h-5"></i>
                         <span id="btnGenerateText">Generate & Optimize Prompt</span>
                     </button>
-                    <button onclick="resetForm()" class="p-3.5 rounded-xl custom-glass border border-[var(--border-color)] hover:border-[var(--accent-primary)] transition-all text-[var(--text-muted)] hover:text-[var(--text-main)]" title="Reset">
+                    <button onclick="resetForm()" class="p-3.5 rounded-xl custom-glass border border-[var(--border-color)] hover:border-[var(--accent-primary)] active:brightness-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)] transition-colors text-[var(--text-muted)] hover:text-[var(--text-main)]" title="Reset">
                         <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
                     </button>
                 </div>
@@ -358,15 +358,15 @@
 
                 <!-- Copy & Export Actions -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <button onclick="copyPrompt()" class="py-3 px-4 rounded-xl accent-bg text-white font-semibold text-xs flex items-center justify-center space-x-2 custom-glow hover:opacity-90 transition-all">
+                    <button onclick="copyPrompt()" id="copyPromptButton" aria-live="polite" class="py-3 px-4 rounded-xl accent-bg text-white font-semibold text-xs flex items-center justify-center space-x-2 custom-glow hover:brightness-110 active:brightness-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)] transition-colors">
                         <i data-lucide="copy" class="w-4 h-4"></i>
                         <span id="btnCopyText">Copy Prompt</span>
                     </button>
-                    <button onclick="savePrompt()" class="py-3 px-4 rounded-xl custom-glass border border-[var(--border-color)] hover:border-[var(--accent-primary)] font-semibold text-xs flex items-center justify-center space-x-2 transition-all">
+                    <button onclick="savePrompt()" class="py-3 px-4 rounded-xl custom-glass border border-[var(--border-color)] hover:border-[var(--accent-primary)] active:brightness-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)] font-semibold text-xs flex items-center justify-center space-x-2 transition-colors">
                         <i data-lucide="bookmark" class="w-4 h-4 text-[var(--accent-primary)]"></i>
                         <span id="btnSaveText">Save to Library</span>
                     </button>
-                    <button onclick="downloadPrompt()" class="py-3 px-4 rounded-xl custom-glass border border-[var(--border-color)] hover:border-[var(--accent-primary)] font-semibold text-xs flex items-center justify-center space-x-2 transition-all">
+                    <button onclick="downloadPrompt()" class="py-3 px-4 rounded-xl custom-glass border border-[var(--border-color)] hover:border-[var(--accent-primary)] active:brightness-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)] font-semibold text-xs flex items-center justify-center space-x-2 transition-colors">
                         <i data-lucide="download" class="w-4 h-4 text-[var(--accent-primary)]"></i>
                         <span id="btnDownloadText">Download .txt</span>
                     </button>
@@ -475,6 +475,7 @@
         let currentLang = 'EN';
         let currentTheme = 'dark';
         let savedPrompts = [];
+        let copyFeedbackTimer;
 
         if (window.lucide) window.lucide.createIcons();
 
@@ -485,6 +486,30 @@
         function getPromptText() {
             const text = document.getElementById('outputText').textContent.trim();
             return text === DEFAULT_OUTPUT ? '' : text;
+        }
+
+        function showCopyFeedback(success) {
+            const button = document.getElementById('copyPromptButton');
+            if (!button.dataset.originalMarkup) button.dataset.originalMarkup = button.innerHTML;
+            if (copyFeedbackTimer) window.clearTimeout(copyFeedbackTimer);
+
+            button.innerHTML = `<i data-lucide="${success ? 'check' : 'circle-x'}" class="w-4 h-4"></i><span>${success ? (currentLang === 'EN' ? 'Copied!' : 'Kopyalandı!') : (currentLang === 'EN' ? 'Copy failed' : 'Kopyalama alınmadı')}</span>`;
+            button.setAttribute('aria-label', success
+                ? (currentLang === 'EN' ? 'Prompt copied to clipboard' : 'Prompt buferə kopyalandı')
+                : (currentLang === 'EN' ? 'Copy failed' : 'Kopyalama alınmadı'));
+            button.classList.toggle('bg-emerald-600', success);
+            button.classList.toggle('bg-rose-600', !success);
+            button.classList.remove('accent-bg', 'custom-glow');
+            if (window.lucide) window.lucide.createIcons();
+
+            copyFeedbackTimer = window.setTimeout(() => {
+                button.innerHTML = button.dataset.originalMarkup;
+                button.removeAttribute('aria-label');
+                button.classList.remove('bg-emerald-600', 'bg-rose-600');
+                button.classList.add('accent-bg', 'custom-glow');
+                if (window.lucide) window.lucide.createIcons();
+                copyFeedbackTimer = undefined;
+            }, 1800);
         }
 
         function saveState() {
@@ -642,9 +667,11 @@
                     temporaryInput.remove();
                     if (!copied) throw new Error('Clipboard copy was denied by the browser.');
                 }
+                showCopyFeedback(true);
                 showStatus(currentLang === 'EN' ? 'Prompt copied to clipboard.' : 'Prompt buferə kopyalandı.');
             } catch (error) {
                 console.error('Unable to copy prompt', error);
+                showCopyFeedback(false);
                 showStatus('Copy failed. Your browser may block clipboard access; select the prompt and copy it manually.');
             }
         }
