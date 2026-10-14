@@ -225,6 +225,51 @@
                         <textarea id="subjectInput" oninput="saveState()" rows="3" placeholder="Describe your idea, task, or goal..." class="w-full px-4 py-3 rounded-xl custom-glass border border-[var(--border-color)] text-sm focus:outline-none focus:border-[var(--accent-primary)] transition-all resize-y"></textarea>
                     </div>
                     <div>
+                        <label for="aiTargetSelect" class="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2" id="labelAiTarget">Create AI for:</label>
+                        <select id="aiTargetSelect" onchange="saveState()" class="w-full px-4 py-3 rounded-xl custom-glass border border-[var(--border-color)] text-sm focus:outline-none focus:border-[var(--accent-primary)] transition-all bg-[var(--bg-surface)]">
+                            <option value="universal">Other / Any AI (plain-language prompt)</option>
+                            <optgroup label="Chat assistants">
+                                <option value="chatgpt">ChatGPT (OpenAI)</option>
+                                <option value="gemini">Gemini (Google)</option>
+                                <option value="claude">Claude (Anthropic)</option>
+                                <option value="copilot">Microsoft Copilot</option>
+                                <option value="perplexity">Perplexity</option>
+                                <option value="grok">Grok (xAI)</option>
+                                <option value="meta">Meta AI</option>
+                                <option value="deepseek">DeepSeek</option>
+                                <option value="mistral">Mistral Le Chat</option>
+                                <option value="qwen">Qwen Chat</option>
+                                <option value="cohere">Cohere Command</option>
+                                <option value="poe">Poe</option>
+                                <option value="huggingchat">HuggingChat</option>
+                                <option value="character">Character.AI</option>
+                                <option value="pi">Pi</option>
+                                <option value="you">You.com</option>
+                            </optgroup>
+                            <optgroup label="Video generators">
+                                <option value="sora">Sora (OpenAI)</option>
+                                <option value="veo">Veo (Google)</option>
+                                <option value="runway">Runway</option>
+                                <option value="kling">Kling AI</option>
+                                <option value="pika">Pika</option>
+                                <option value="luma">Luma Dream Machine</option>
+                                <option value="hailuo">Hailuo AI</option>
+                                <option value="firefly-video">Adobe Firefly Video</option>
+                                <option value="pixverse">PixVerse</option>
+                            </optgroup>
+                            <optgroup label="Image generators">
+                                <option value="midjourney">Midjourney</option>
+                                <option value="dalle">DALL·E</option>
+                                <option value="firefly-image">Adobe Firefly Image</option>
+                                <option value="imagen">Imagen (Google)</option>
+                                <option value="ideogram">Ideogram</option>
+                                <option value="stable-diffusion">Stable Diffusion</option>
+                                <option value="flux">FLUX</option>
+                                <option value="leonardo">Leonardo AI</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div>
                         <label class="block text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2" id="labelDetails">Extra details, requirements, or constraints (optional)</label>
                         <textarea id="detailsInput" oninput="saveState()" rows="2" placeholder="Add details, audience, length, things to include or avoid..." class="w-full px-4 py-3 rounded-xl custom-glass border border-[var(--border-color)] text-sm focus:outline-none focus:border-[var(--accent-primary)] transition-all resize-y"></textarea>
                     </div>
@@ -354,6 +399,42 @@
         const LIBRARY_KEY = 'nexus_prompt_library';
         const THEMES = ['dark', 'cyberpunk', 'matrix', 'sapphire', 'light'];
         const TABS = ['video', 'photo', 'file'];
+        const AI_TARGET_TYPES = {
+            universal: 'assistant',
+            chatgpt: 'assistant',
+            gemini: 'assistant',
+            claude: 'assistant',
+            copilot: 'assistant',
+            perplexity: 'assistant',
+            grok: 'assistant',
+            meta: 'assistant',
+            deepseek: 'assistant',
+            mistral: 'assistant',
+            qwen: 'assistant',
+            cohere: 'assistant',
+            poe: 'assistant',
+            huggingchat: 'assistant',
+            character: 'assistant',
+            pi: 'assistant',
+            you: 'assistant',
+            sora: 'video',
+            veo: 'video',
+            runway: 'video',
+            kling: 'video',
+            pika: 'video',
+            luma: 'video',
+            hailuo: 'video',
+            'firefly-video': 'video',
+            pixverse: 'video',
+            midjourney: 'image',
+            dalle: 'image',
+            'firefly-image': 'image',
+            imagen: 'image',
+            ideogram: 'image',
+            'stable-diffusion': 'image',
+            flux: 'image',
+            leonardo: 'image'
+        };
         const OPTIONS = {
             video: {
                 styleLabel: 'Camera / motion style',
@@ -412,6 +493,7 @@
                 lang: currentLang,
                 tab: currentTab,
                 subject: document.getElementById('subjectInput').value,
+                aiTarget: document.getElementById('aiTargetSelect').value,
                 details: document.getElementById('detailsInput').value,
                 style: document.getElementById('styleSelect').value,
                 lighting: document.getElementById('lightingSelect').value,
@@ -480,6 +562,9 @@
             }
 
             const details = document.getElementById('detailsInput').value.trim();
+            const aiTargetSelect = document.getElementById('aiTargetSelect');
+            const aiTarget = aiTargetSelect.options[aiTargetSelect.selectedIndex].text;
+            const aiTargetType = AI_TARGET_TYPES[aiTargetSelect.value] || 'assistant';
             const style = document.getElementById('styleSelect').value;
             const lighting = document.getElementById('lightingSelect').value;
             const enhancements = ['chk1', 'chk2', 'chk3', 'chk4']
@@ -487,14 +572,31 @@
                 .map(id => OPTIONS[currentTab].enhancers[Number(id.slice(-1)) - 1]);
             const extra = details ? `\n\nAdditional details and constraints:\n${details}` : '';
             const quality = enhancements.length ? `\n\nQuality priorities: ${enhancements.join('; ')}.` : '';
+            const mode = currentTab === 'video' ? 'video' : currentTab === 'photo' ? 'image' : 'text';
+            const targetGuidance = aiTargetType === mode
+                ? mode === 'video'
+                    ? 'Use a direct natural-language brief with clear subject action, camera movement, lighting, and continuity. Do not add undocumented parameter syntax.'
+                    : mode === 'image'
+                        ? 'Use natural-language visual directions with a clear subject, composition, lighting, and style. Keep all constraints explicit.'
+                        : ''
+                : aiTargetType === 'assistant'
+                    ? 'Use plain language, preserve the constraints, and return the requested result in a clearly structured format.'
+                    : `This target is not primarily a ${mode} generator. Keep the requested ${mode} output explicit; if it cannot produce that output, state the limitation rather than substituting another media type.`;
+            const target = `AI target: ${aiTarget}. ${targetGuidance}`;
             let prompt;
 
             if (currentTab === 'video') {
-                prompt = `Create a polished video based on this idea:\n${subject}\n\nCamera and motion direction: ${style}.\nLighting and atmosphere: ${lighting}.\nKeep the scene coherent, the motion intentional, and the subject recognizable throughout.${extra}${quality}\n\nReturn a concise, production-ready video-generation prompt.`;
+                const videoInstruction = aiTargetType === 'video'
+                    ? 'Generate one moving video clip from the brief.'
+                    : 'Write a ready-to-use video-generation prompt as text; do not generate media directly.';
+                prompt = `${target}\n\nVIDEO ONLY: ${videoInstruction} The requested media must be a moving video clip, never a still image, photo, poster, storyboard, or static frame.\n\nCreate a polished video based on this idea:\n${subject}\n\nCamera and motion direction: ${style}.\nLighting and atmosphere: ${lighting}.\nKeep the scene coherent, the motion intentional, and the subject recognizable throughout.${extra}${quality}\n\nFinal requirement: produce video, not an image. If video generation is unavailable, return only text explaining the limitation or provide the video prompt as text; never create or substitute an image.`;
             } else if (currentTab === 'photo') {
-                prompt = `Create a compelling image based on this idea:\n${subject}\n\nArt and camera direction: ${style}.\nLighting and atmosphere: ${lighting}.\nUse a clear focal point, intentional composition, and cohesive visual details.${extra}${quality}\n\nReturn a concise, production-ready image-generation prompt.`;
+                const imageInstruction = aiTargetType === 'image'
+                    ? 'Create one still image based on the brief.'
+                    : 'Write a ready-to-use image-generation prompt as text; do not generate media directly.';
+                prompt = `${target}\n\nIMAGE ONLY: ${imageInstruction} Do not turn this request into a video.\n\nCreate a compelling image based on this idea:\n${subject}\n\nArt and camera direction: ${style}.\nLighting and atmosphere: ${lighting}.\nUse a clear focal point, intentional composition, and cohesive visual details.${extra}${quality}\n\nReturn a concise, production-ready image-generation prompt.`;
             } else {
-                prompt = `You are a skilled, thoughtful assistant. Help with this task:\n${subject}${extra}\n\nApproach: ${style}.\nPriorities: ${lighting}.${quality}\n\nBefore answering, identify any assumptions. Follow the requirements closely, organize the result clearly, and verify that the response addresses the requested task. If essential information is missing, ask focused questions instead of inventing facts.`;
+                prompt = `${target}\n\nYou are a skilled, thoughtful assistant. Help with this task:\n${subject}${extra}\n\nApproach: ${style}.\nPriorities: ${lighting}.${quality}\n\nBefore answering, identify any assumptions. Follow the requirements closely, organize the result clearly, and verify that the response addresses the requested task. If essential information is missing, ask focused questions instead of inventing facts. Return text only; do not create an image or video.`;
             }
 
             document.getElementById('outputText').textContent = prompt;
@@ -662,6 +764,9 @@
                 setTheme(currentTheme, false);
                 switchTab(currentTab, false, true);
                 if (typeof state.subject === 'string') document.getElementById('subjectInput').value = state.subject;
+                if (typeof state.aiTarget === 'string' && Object.prototype.hasOwnProperty.call(AI_TARGET_TYPES, state.aiTarget)) {
+                    document.getElementById('aiTargetSelect').value = state.aiTarget;
+                }
                 if (typeof state.details === 'string') document.getElementById('detailsInput').value = state.details;
                 if (typeof state.style === 'string') document.getElementById('styleSelect').value = state.style;
                 if (typeof state.lighting === 'string') document.getElementById('lightingSelect').value = state.lighting;
@@ -701,6 +806,7 @@
             document.getElementById('tabPhotoText').textContent = currentLang === 'EN' ? 'Photo & Art' : 'Foto və İncəsənət';
             document.getElementById('tabFileText').textContent = currentLang === 'EN' ? 'Writing & Apps' : 'Yazı və Tətbiqlər';
             document.getElementById('labelSubject').textContent = currentLang === 'EN' ? 'What do you want to create?' : 'Nə yaratmaq istəyirsiniz?';
+            document.getElementById('labelAiTarget').textContent = currentLang === 'EN' ? 'Create AI for:' : 'Hansı süni intellekt üçün yaradılır:';
             document.getElementById('labelDetails').textContent = currentLang === 'EN' ? 'Extra details, requirements, or constraints (optional)' : 'Əlavə detallar, tələblər və ya məhdudiyyətlər (istəyə bağlı)';
             document.getElementById('labelEnhancers').textContent = currentLang === 'EN' ? 'Quality options' : 'Keyfiyyət seçimləri';
             document.getElementById('btnGenerateText').textContent = currentLang === 'EN' ? 'Generate Prompt' : 'Prompt yarat';
